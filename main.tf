@@ -4,7 +4,7 @@ provider "aws" {
 
 # Variáveis para personalização do projeto e candidato
 variable "projeto" {
-  description = "Nome do projeto"
+  description = "Desafio Terraform"
   type        = string
   default     = "VExpenses"
 }
@@ -12,13 +12,44 @@ variable "projeto" {
 variable "candidato" {
   description = "Nome do candidato"
   type        = string
-  default     = "SeuNome"
+  default     = "JoaoLucasRodrigues"
 }
 
 variable "allowed_ssh_ip" {
   description = "IP autorizado para conexões SSH"
   type        = string
   default     = "YOUR_IP/32"  # Substituir pelo seu IP para maior segurança
+}
+
+# Variáveis para maior flexibilidade
+variable "instance_type" {
+  description = "Tipo da instância EC2"
+  type        = string
+  default     = "t2.micro"
+}
+
+variable "disk_size" {
+  description = "Tamanho do volume da instância (GB)"
+  type        = number
+  default     = 20
+}
+
+variable "az" {
+  description = "Zona de disponibilidade"
+  type        = string
+  default     = "us-east-1a"
+}
+
+variable "vpc_cidr" {
+  description = "CIDR da VPC"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "subnet_cidr" {
+  description = "CIDR da Subnet"
+  type        = string
+  default     = "10.0.1.0/24"
 }
 
 # Criação de chave SSH para acesso à instância EC2
@@ -34,7 +65,7 @@ resource "aws_key_pair" "ec2_key_pair" {
 
 # Criação da VPC principal
 resource "aws_vpc" "main_vpc" {
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
 
@@ -46,8 +77,8 @@ resource "aws_vpc" "main_vpc" {
 # Criando uma subnet dentro da VPC
 resource "aws_subnet" "main_subnet" {
   vpc_id            = aws_vpc.main_vpc.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "us-east-1a"
+  cidr_block        = var.subnet_cidr
+  availability_zone = var.az
 
   tags = {
     Name = "${var.projeto}-${var.candidato}-subnet"
@@ -136,15 +167,15 @@ data "aws_ami" "debian12" {
 # Criando uma instância EC2 com Debian 12 e Nginx pré-instalado
 resource "aws_instance" "debian_ec2" {
   ami             = data.aws_ami.debian12.id
-  instance_type   = "t2.micro"
+  instance_type   = var.instance_type
   subnet_id       = aws_subnet.main_subnet.id
   key_name        = aws_key_pair.ec2_key_pair.key_name
   security_groups = [aws_security_group.main_sg.name]
   associate_public_ip_address = true
 
   root_block_device {
-    volume_size           = 20
-    volume_type           = "gp2"
+    volume_size           = var.disk_size
+    volume_type           = "gp3"  # Melhor custo e desempenho
     delete_on_termination = true
   }
 
