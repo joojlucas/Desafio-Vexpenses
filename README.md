@@ -235,3 +235,15 @@ user_data = <<-EOF
 #### 2.1. Justificativa
 - Facilita a configuração do servidor web ao instalar e iniciar o Nginx automaticamente.
 - Garante que o serviço seja iniciado após reinicializações com *systemctl enable nginx*.
+
+### 3. Modularidade
+- Agora é possível mudar o tipo da instância (*instance_type*), tamanho do disco (*disk_size*), zona de disponibilidade (*az*), **CIDR da VPC/Subnet** sem modificar o código principal.
+
+### 4. Performance & Custo
+- Volume alterado para gp3, que tem melhor performance e menor custo em comparação ao gp2.
+
+### 5. Melhoria na Manutenção
+- Código mais legível, comentado, flexível e fácil de modificar.
+
+## Conclusão
+Essas mudanças tornam a infraestrutura mais flexível, escalável e econômica, sendo recomendadas para qualquer ambiente que precise de segurança, eficiência e rápida configuração.
