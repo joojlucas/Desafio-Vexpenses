@@ -176,3 +176,62 @@ Exibe a **chave privada SSH** e o **IP público** da instância.
 Este projeto fornece uma infraestrutura básica para hospedar uma instância EC2 Debian 12 de forma segura e automatizada. Ele pode ser expandido com balanceadores de carga, bancos de dados e outras configurações avançadas.
 
 
+
+## Melhorias Implementadas
+### 1. Segurança Aprimorada
+#### 1.1. Restrição do Acesso SSH
+Antes: O código permitia conexões SSH de qualquer IP (0.0.0.0/0), o que representa um risco de segurança.
+Agora: O acesso SSH está restrito a um IP específico.
+```hcl
+resource "aws_security_group" "main_sg" {
+  name        = "${var.projeto}-${var.candidato}-sg"
+  description = "Segurança aprimorada para SSH e HTTP"
+  vpc_id      = aws_vpc.main_vpc.id
+
+  # Permitir apenas SSH do IP autorizado
+  ingress {
+    description = "Allow SSH from authorized IP"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_ssh_ip]
+  }
+
+  # Permitir acesso HTTP para Nginx
+  ingress {
+    description = "Allow HTTP traffic"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Permitir saída irrestrita
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+```
+#### 1.2. Justificativa
+- A **restrição do SSH** protege contra ataques de força bruta e acessos não autorizados.
+- Abertura da porta 80 permite acesso ao servidor web Nginx.
+
+### 2. Automatização da Instalação do Nginx
+Antes: O *user_data* apenas realizava atualização do sistema.
+Agora: Ele instala e inicia o Nginx automaticamente.
+```hcl
+user_data = <<-EOF
+              #!/bin/bash
+              apt-get update -y
+              apt-get upgrade -y
+              apt-get install -y nginx
+              systemctl start nginx
+              systemctl enable nginx
+              EOF
+```
+#### 2.1. Justificativa
+- Facilita a configuração do servidor web ao instalar e iniciar o Nginx automaticamente.
+- Garante que o serviço seja iniciado após reinicializações com *systemctl enable nginx*.
